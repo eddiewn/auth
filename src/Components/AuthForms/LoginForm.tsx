@@ -5,7 +5,7 @@ type Props = {
 
 const LoginForm = ({setFormState, formState}: Props) => {
     return(
-                    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+            <div className="flex items-center justify-center min-h-screen bg-gray-100">
                 <form className="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">
                     <h2 className="text-2xl font-bold mb-6 text-center">
                         Login
@@ -52,6 +52,21 @@ const LoginForm = ({setFormState, formState}: Props) => {
                         Register
                     </button>
                 </form>
+                <button onClick={() => {
+                    try {
+                        const addChungusUser = async () => {
+                            const url = ("http://localhost:4000/users")
+                            fetch(url,{
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                            })
+                        }
+
+                        addChungusUser();
+                    } catch (error) {
+                        console.log("Chungus error:", error)
+                    }
+                }}>This is a button to add Chugus user</button>
             </div>
     )
 }
