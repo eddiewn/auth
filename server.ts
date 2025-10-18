@@ -36,8 +36,18 @@ app.get("/", (req, res) => {
 });
 
 app.post("/users", (req, res) => {
+    const username = req.body.username;
+    const password = req.body.password;
+
     try {
-        console.log("Chugnus")
+        const text = "INSERT INTO users(username, password) VALUES ($1, $2)"
+        const values = [username, password];
+
+        pool.query(text, values, (err, res) => {
+
+        })
+
+        res.json({message: `${username} inserted`});
     } catch (error) {
         console.log("Error posting user", error)
     }
