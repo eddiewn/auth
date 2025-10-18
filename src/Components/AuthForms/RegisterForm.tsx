@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useNavigate } from "react-router-dom";
 
 type Props = {
     setFormState: (formState: boolean) => void;
@@ -14,13 +15,26 @@ const RegisterForm = ({setFormState, formState}: Props) => {
     const validateUser = async () => {
         try {
             const url = "http://localhost:4000/users"
-            await fetch(url, {
+            const response = await fetch(url, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({ username: username, password: password })
             });
+            const data = await response.json()
+
+            if (!response.ok) {
+                console.log("Error:", data.error);
+                alert(data.error);
+                return;
+            }
+
+            alert(data.message);
+            console.log(data.message);
+            
+            setFormState(!formState)
+
         } catch (error) {
             console.log("Error validating user:", error)
         }
