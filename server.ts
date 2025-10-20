@@ -3,6 +3,7 @@ import cors from "cors";
 import pg from "pg";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
+import bcrypt from "bcrypt"
 
 declare module "express-session" {
   interface SessionData {
@@ -14,6 +15,7 @@ declare module "express-session" {
 
 const {Pool} = pg;
 const PgSession = connectPgSimple(session);
+const saltRounds = 10;
 
 const pool = new Pool({
     user: "postgres",
@@ -81,14 +83,16 @@ app.post("/register", async (req, res) => {
             return res.status(400).json({error: "Username already exists."});
         }
 
-        const query = "INSERT INTO users(username, password) VALUES ($1, $2)";
-        const values = [username, password];
-        await pool.query(query, values);
-
+        bcrypt.genSalt(saltRounds, function(err, salt) {
+            bcrypt.hash(password, salt, async function(err, hash) {
+                if (err) throw err;
+                
+                const query = "INSERT INTO users(username, password) VALUES ($1, $2)";
+                const values = [username, hash];
+                await pool.query(query, values);        
+            });
+        });
         res.json({message: `${username} inserted`});
-
-        
-
     } catch (error) {
         console.log("Error posting user", error);
     }
@@ -96,18 +100,24 @@ app.post("/register", async (req, res) => {
 
 app.post("/login", async (req, res) => {
     try {
-        const username = req.body.username;
-        const password = req.body.password;
+        const userProvidedUsername = req.body.username;
+        const userProvidedPassword = req.body.password;
 
-        const query = `SELECT username FROM users WHERE username=$1 AND password=$2`
-        const values = [username, password]
+        const stored_hash = (await pool.query(`SELECT password FROM users WHERE username='${userProvidedUsername}'`)).rows[0].password;
 
-        const validate = await pool.query(query, values);
-        if(validate.rows.length == 0) return res.status(401).json({error: "Wrong password or username"});
+        bcrypt.compare(userProvidedPassword, stored_hash, async function(err, result) {
+            if (err) throw err;
+            if (result === true) {
+                const user = await (await pool.query(`SELECT username FROM users WHERE username='${userProvidedUsername}'`)).rows[0];
+                req.session.user = { username: user.username }; 
+                res.status(200).json({message: `${userProvidedUsername} Logged in!`})
+            } else {
+                return res.status(401).json({error: "Wrong password or username"})
+            }
+        });
 
-        const user = validate.rows[0];
-        req.session.user = { username: user.username }; 
-        res.status(200).json({message: `${username} Logged in!`})
+
+
 
     } catch (error) {
         console.log("Chungus error in getting users", error)

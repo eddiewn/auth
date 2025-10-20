@@ -13,6 +13,7 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.1.14",
     "@types/pg": "^8.15.5",
+    "bcrypt": "^6.0.0",
     "connect-pg-simple": "^10.0.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
@@ -25,6 +26,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
+    "@types/bcrypt": "^6.0.0",
     "@types/connect-pg-simple": "^7.0.3",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
