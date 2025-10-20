@@ -1,8 +1,19 @@
 import express from "express";
 import cors from "cors";
 import pg from "pg";
+import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
+
+declare module "express-session" {
+  interface SessionData {
+    user?: {
+      username: string;
+    };
+  }
+}
 
 const {Pool} = pg;
+const PgSession = connectPgSimple(session);
 
 const pool = new Pool({
     user: "postgres",
@@ -25,13 +36,39 @@ const app = express();
 const PORT = 4000;
 
 app.use(express.json());
+
+app.use(session({
+    store: new PgSession({
+        pool: pool, 
+        tableName: "session",
+        }),
+    secret: "sigmaskibidi",
+    resave: false,
+    saveUninitialized: false,
+    cookie: { 
+        maxAge: 1000 * 60 * 60 * 24,
+        // only for localhost
+        secure: false,     
+    }
+}))
+
 app.use(
     cors({
         origin: "http://localhost:5173",
+        credentials: true,
     })
 );
 
-app.post("/users", async (req, res) => {
+
+app.get("/me", (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ loggedIn: false });
+  }
+
+  res.status(200).json({ loggedIn: true, user: req.session.user });
+});
+
+app.post("/register", async (req, res) => {
     try {
         const username = req.body.username;
         const password = req.body.password;
@@ -44,21 +81,23 @@ app.post("/users", async (req, res) => {
             return res.status(400).json({error: "Username already exists."});
         }
 
-        const text = "INSERT INTO users(username, password) VALUES ($1, $2)";
+        const query = "INSERT INTO users(username, password) VALUES ($1, $2)";
         const values = [username, password];
-        await pool.query(text, values);
+        await pool.query(query, values);
 
         res.json({message: `${username} inserted`});
+
+        
 
     } catch (error) {
         console.log("Error posting user", error);
     }
 });
 
-app.get("/users", async (req, res) => {
+app.post("/login", async (req, res) => {
     try {
-        const username = req.query.username;
-        const password = req.query.password;
+        const username = req.body.username;
+        const password = req.body.password;
 
         const query = `SELECT username FROM users WHERE username=$1 AND password=$2`
         const values = [username, password]
@@ -66,6 +105,8 @@ app.get("/users", async (req, res) => {
         const validate = await pool.query(query, values);
         if(validate.rows.length == 0) return res.status(401).json({error: "Wrong password or username"});
 
+        const user = validate.rows[0];
+        req.session.user = { username: user.username }; 
         res.status(200).json({message: `${username} Logged in!`})
 
     } catch (error) {

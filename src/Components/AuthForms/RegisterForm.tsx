@@ -12,7 +12,7 @@ const RegisterForm = ({setFormState, formState}: Props) => {
 
     const validateUser = async () => {
         try {
-            const url = "http://localhost:4000/users";
+            const url = "http://localhost:4000/register";
             const response = await fetch(url, {
                 method: "POST",
                 headers: {

@@ -1,28 +1,37 @@
 import { useState } from "react";
+import { useNavigate, useNavigation } from "react-router-dom";
 
 type Props = {
     setFormState: (formState: boolean) => void;
     formState: boolean;
 }
 
-type LoginUserProps = {
-    username: string;
-    password: string;
-}
-
 const LoginForm = ({setFormState, formState}: Props) => {
     const [username, setUsername] = useState<string>("");
     const [password, setPassword] = useState<string>("");
+    const navigate = useNavigate();
 
-    const loginUser = async ({username, password}: LoginUserProps) => {
+
+    const loginUser = async () => {
         try {
-            const URL = `http://localhost:4000/users?username=${username}&password=${password}`;
-            const response = await fetch(URL);
+            const URL = `http://localhost:4000/login`;
+            const response = await fetch(URL, {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password,
+                })
+            });
             const data = await response.json();
 
             if(!response.ok) throw data.error;
 
             console.log(data.message)
+            navigate("../");
 
         } catch (error) {
             console.log("Error logging in user:", error)
@@ -34,7 +43,7 @@ const LoginForm = ({setFormState, formState}: Props) => {
                 <form 
                     onSubmit={(e) => {
                         e.preventDefault();
-                        loginUser({ username, password });
+                        loginUser();
                     }}
                     className="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">
                     <h2 className="text-2xl font-bold mb-6 text-center">
