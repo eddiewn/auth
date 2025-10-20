@@ -31,10 +31,6 @@ app.use(
     })
 );
 
-app.get("/", (req, res) => {
-    res.send("Hello");
-});
-
 app.post("/users", async (req, res) => {
     try {
         const username = req.body.username;
@@ -59,9 +55,23 @@ app.post("/users", async (req, res) => {
     }
 });
 
-app.get("/test", (req, res) => {
-    res.json({message: "Hello"});
-});
+app.get("/users", async (req, res) => {
+    try {
+        const username = req.query.username;
+        const password = req.query.password;
+
+        const query = `SELECT username FROM users WHERE username=$1 AND password=$2`
+        const values = [username, password]
+
+        const validate = await pool.query(query, values);
+        if(validate.rows.length == 0) return res.status(401).json({error: "Wrong password or username"});
+
+        res.status(200).json({message: `${username} Logged in!`})
+
+    } catch (error) {
+        console.log("Chungus error in getting users", error)
+    }
+})
 
 app.listen(PORT, () => {
     console.log("Im listening to", PORT);

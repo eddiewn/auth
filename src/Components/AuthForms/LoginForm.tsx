@@ -1,12 +1,42 @@
+import { useState } from "react";
+
 type Props = {
     setFormState: (formState: boolean) => void;
     formState: boolean;
 }
 
+type LoginUserProps = {
+    username: string;
+    password: string;
+}
+
 const LoginForm = ({setFormState, formState}: Props) => {
+    const [username, setUsername] = useState<string>("");
+    const [password, setPassword] = useState<string>("");
+
+    const loginUser = async ({username, password}: LoginUserProps) => {
+        try {
+            const URL = `http://localhost:4000/users?username=${username}&password=${password}`;
+            const response = await fetch(URL);
+            const data = await response.json();
+
+            if(!response.ok) throw data.error;
+
+            console.log(data.message)
+
+        } catch (error) {
+            console.log("Error logging in user:", error)
+        }
+    }
+
     return(
             <div className="flex items-center justify-center min-h-screen bg-gray-100">
-                <form className="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">
+                <form 
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        loginUser({ username, password });
+                    }}
+                    className="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">
                     <h2 className="text-2xl font-bold mb-6 text-center">
                         Login
                     </h2>
@@ -20,6 +50,9 @@ const LoginForm = ({setFormState, formState}: Props) => {
                             className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
                             placeholder="Enter your username"
                             required
+                            onChange={(e) => {
+                                setUsername(e.target.value);  
+                            }}
                         />
                     </div>
 
@@ -32,12 +65,19 @@ const LoginForm = ({setFormState, formState}: Props) => {
                             className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
                             placeholder="Enter your password"
                             required
+                            onChange={(e) => {
+                                setPassword(e.target.value);  
+                            }}
                         />
                     </div>
 
                     <button
                         type="submit"
                         className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                        // onClick={async () => {
+                            
+                        //     loginUser({username, password});
+                        // }}
                     >
                         Login
                     </button>
@@ -52,21 +92,6 @@ const LoginForm = ({setFormState, formState}: Props) => {
                         Register
                     </button>
                 </form>
-                <button onClick={() => {
-                    try {
-                        const addChungusUser = async () => {
-                            const url = ("http://localhost:4000/users")
-                            fetch(url,{
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                            })
-                        }
-
-                        addChungusUser();
-                    } catch (error) {
-                        console.log("Chungus error:", error)
-                    }
-                }}>This is a button to add Chugus user</button>
             </div>
     )
 }
